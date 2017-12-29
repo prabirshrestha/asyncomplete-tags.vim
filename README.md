@@ -31,11 +31,13 @@ au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#source
     \ 'whitelist': ['c'],
     \ 'completor': function('asyncomplete#sources#tags#completor'),
     \ 'config': {
-    \    " Max file size in bytes. Defaults to 20mb
-    \    'max_file_size': 20000000,
+    \    'max_file_size': 50000000,
     \  },
     \ }))
 ```
 
-Note: `config` is optional. `max_file_size` defaults to 20000000 (20mb). If the tag file size exceeds max_file_size it is ignored.
+Note: `config` is optional. `max_file_size` defaults to 20000000 (50mb). If the tag file size exceeds max_file_size it is ignored.
 Set `max_file_size` to `-1` for unlimited file size. This is not recommended as it could slow down vim a lot.
+
+It will try to use `grep` or `findstr` (findstr ships with Windows) asynchronously.
+If those executables are not found it will fallback to using vimscript which could be slow for large tag files.
