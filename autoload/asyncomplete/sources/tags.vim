@@ -1,3 +1,5 @@
+let s:is_win = has('win32') || has('win64')
+
 function! asyncomplete#sources#tags#get_source_options(opt)
     return a:opt
 endfunction
@@ -24,20 +26,20 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
 
     let l:info = { 'counter': len(l:tag_files), 'startcol': l:startcol, 'matches': l:matches, 'opt': a:opt, 'ctx': a:ctx, 'lines': [] }
 
-    if executable('grep')
+    if (executable('grep'))
         for l:tag_file in l:tag_files
-            let l:id = s:exec(['grep', '-e', '^' . l:typed . '[^\t]*\t', s:escape(l:tag_file)], function('s:on_exec_events', [l:info]))
-            if (l:id <= 0)
+            let l:jobid = s:exec(['grep', '-e', '^' . l:typed . '[^\t]*\t', s:escape(l:tag_file)], function('s:on_exec_events', [l:info]))
+            if (l:jobid < 0)
                 let l:info['counter'] -= 1
             endif
         endfor
         if l:info['counter'] == 0
             call s:complete(l:info)
         endif
-    elseif executable('findstr')
+    elseif (executable('findstr'))
         for l:tag_file in l:tag_files
-            let l:id = s:exec(['findstr', '/i', '/b', l:typed, s:escape(l:tag_file)], function('s:on_exec_events', [l:info]))
-            if (l:id <= 0)
+            let l:jobid = s:exec(['findstr', '/i', '/b', l:typed, s:escape(l:tag_file)], function('s:on_exec_events', [l:info]))
+            if (l:jobid < 0)
                 let l:info['counter'] -= 1
             endif
         endfor
@@ -55,7 +57,7 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
 endfunction
 
 function s:escape(path) abort
-  if has('win32') || has('win64')
+  if s:is_win
       return substitute(a:path, '/', '\\', 'g')
   else
       return a:path
@@ -130,11 +132,8 @@ function! s:exec(cmd, callback) abort
             \ 'exit_cb': function('s:on_vim_job_event', [a:callback, 'exit']),
             \ 'mode': 'raw',
             \ })
-        if job_status(l:job) !=? 'run'
-            return -1
-        else
-            return 1
-        endif
+        let l:channel = job_getchannel(job)
+        return ch_info(l:channel)['id']
     endif
 endfunction
 
