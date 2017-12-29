@@ -19,14 +19,18 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
         return
     endif
 
+    let l:tags_tempname = tempname()
+
     let l:matches = {}
 
     for l:tag_file in l:tag_files
-        let l:lines = readfile(l:tag_file)
+        silent exec 'grep! -P "^' . l:kw . '[^\t]*\t" ' . l:tag_file . ' > ' . l:tags_tempname . ' 2>/dev/null'
+        let l:lines = readfile(l:tags_tempname)
         for l:line in l:lines
             if l:line[0] !~ '!'
                 let l:splits = split(l:line, "\t")
-                let l:word = l:splits[0]
+                let l:first = split(l:splits[0], ":")
+                let l:word = l:first[-1]
                 if !has_key(l:matches, l:word)
                     " only add non-duplicated words
                     let l:matches[l:word] = 1
@@ -34,6 +38,8 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
             endif
         endfor
     endfor
+
+    call delete(l:tags_tempname)
 
     let l:startcol = l:col - l:kwlen
     call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, keys(l:matches))
