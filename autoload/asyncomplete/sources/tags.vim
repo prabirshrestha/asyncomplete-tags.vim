@@ -28,7 +28,7 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
 
     if (executable('grep'))
         for l:tag_file in l:tag_files
-            let l:jobid = s:exec(['grep', '-e', '^' . l:typed . '[^\t]*\t', s:escape(l:tag_file)], function('s:on_exec_events', [l:info]))
+            let l:jobid = s:exec(['grep', '-P', '^' . l:kw . "[^\t]*\t", s:escape(l:tag_file)], function('s:on_exec_events', [l:info]))
             if (l:jobid < 0)
                 let l:info['counter'] -= 1
             endif
