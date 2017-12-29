@@ -56,7 +56,7 @@ function! s:get_tag_files(opt)
     let l:result = []
     for l:tag_file in l:all_tag_files
         let l:file_size = getfsize(l:tag_file)
-        if l:file_size == -1 || l:file_size <= l:max_file_size
+        if l:max_file_size == -1 || l:file_size <= l:max_file_size
             call add(l:result, l:tag_file)
         else
             call asyncomplete#log('ignoring tag file due to large size', l:tag_file, l:file_size)
