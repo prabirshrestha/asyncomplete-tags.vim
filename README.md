@@ -37,7 +37,7 @@ au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#source
 ```
 
 Note: `config` is optional. `max_file_size` defaults to 50000000 (50mb). If the tag file size exceeds max_file_size it is ignored.
-Set `max_file_size` to `-1` for unlimited file size. This is not recommended as it could slow down vim a lot.
+Set `max_file_size` to `-1` for unlimited file size.
 
 It will try to use `grep` or `findstr` (findstr ships with Windows) asynchronously.
 If those executables are not found it will fallback to using vimscript which could be slow for large tag files.
