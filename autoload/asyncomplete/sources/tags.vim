@@ -28,7 +28,7 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
 
     if (executable('grep'))
         for l:tag_file in l:tag_files
-            let l:jobid = s:exec(['grep', '-P', '^' . l:kw . "[^\t]*\t", s:escape(l:tag_file)], function('s:on_exec_events', [l:info]))
+            let l:jobid = s:exec(['grep', '-P', '^' . l:kw . "[^\t]*\t", s:escape(l:tag_file)], 0, function('s:on_exec_events', [l:info]))
             if (l:jobid < 0)
                 let l:info['counter'] -= 1
             endif
@@ -38,7 +38,7 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
         endif
     elseif (executable('findstr'))
         for l:tag_file in l:tag_files
-            let l:jobid = s:exec(['findstr', '/i', '/b', l:typed, s:escape(l:tag_file)], function('s:on_exec_events', [l:info]))
+            let l:jobid = s:exec(['findstr', '/i', '/b', l:typed, s:escape(l:tag_file)], 0, function('s:on_exec_events', [l:info]))
             if (l:jobid < 0)
                 let l:info['counter'] -= 1
             endif
@@ -82,6 +82,7 @@ endfunction
 function! s:complete(info) abort
     let l:opt = a:info['opt']
     let l:ctx = a:info['ctx']
+    call asyncomplete#log(keys(a:info['matches']))
     call asyncomplete#complete(l:opt['name'], l:ctx, a:info['startcol'], keys(a:info['matches']))
 endfunction
 
@@ -118,31 +119,66 @@ function! s:get_tag_files(opt)
 endfunction
 
 " vim8/neovim jobs wrapper {{{
-function! s:exec(cmd, callback) abort
+function! s:exec(cmd, str, callback) abort
+    call asyncomplete#log('asyncomplete-tags.vim', 's:exec', a:cmd)
     if has('nvim')
         return jobstart(a:cmd, {
-            \ 'on_stdout': a:callback,
-            \ 'on_stderr': a:callback,
-            \ 'on_exit': a:callback,
+                \ 'on_stdout': function('s:on_nvim_job_event', [a:str, a:callback]),
+                \ 'on_stderr': function('s:on_nvim_job_event', [a:str, a:callback]),
+                \ 'on_exit': function('s:on_nvim_job_event', [a:str, a:callback]),
             \ })
     else
+        let l:info = { 'close': 0, 'exit': 0, 'exit_code': -1 }
         let l:job = job_start(a:cmd, {
-            \ 'out_cb': function('s:on_vim_job_event', [a:callback, 'stdout']),
-            \ 'err_cb': function('s:on_vim_job_event', [a:callback, 'stderr']),
-            \ 'exit_cb': function('s:on_vim_job_event', [a:callback, 'exit']),
-            \ 'mode': 'raw',
+                \ 'out_cb': function('s:on_vim_job_event', [l:info, a:str, a:callback, 'stdout']),
+                \ 'err_cb': function('s:on_vim_job_event', [l:info, a:str, a:callback, 'stderr']),
+                \ 'exit_cb': function('s:on_vim_job_event', [l:info, a:str, a:callback, 'exit']),
+                \ 'close_cb': function('s:on_vim_job_close_cb', [l:info, a:str, a:callback]),
             \ })
-        let l:channel = job_getchannel(job)
+        let l:channel = job_getchannel(l:job)
         return ch_info(l:channel)['id']
     endif
 endfunction
 
-function! s:on_vim_job_event(callback, event, id, data) abort
-    " normalize to neovim's job api
+function! s:on_nvim_job_event(str, callback, id, data, event) abort
     if (a:event == 'exit')
+        call asyncomplete#log('asyncomplete-tags.vim', 'exit', a:data, a:id)
+        call a:callback(a:id, a:data, a:event)
+    elseif a:str
+        " convert array to string since neovim uses array split by \n by default
+        call a:callback(a:id, join(a:data, "\n"), a:event)
+    else
+        call a:callback(a:id, a:data, a:event)
+    endif
+endfunction
+
+function! s:on_vim_job_event(info, str, callback, event, id, data) abort
+    if a:event == 'exit'
+        call asyncomplete#log('asyncomplete-tags.vim', 'exit', a:data, a:info['close'])
+        let a:info['exit'] = 1
+        let a:info['exit_code'] = a:data
+        let a:info['id'] = a:id
+        if a:info['close'] && a:info['exit']
+            " for more info refer to :h job-start
+            " job may exit before we read the output and output may be lost.
+            " in unix this happens because closing the write end of a pipe
+            " causes the read end to get EOF.
+            " close and exit has race condition, so wait for both to complete
+            call a:callback(a:id, a:data, a:event)
+        endif
+    elseif a:str
         call a:callback(a:id, a:data, a:event)
     else
+        " convert string to array since vim uses string by default
         call a:callback(a:id, split(a:data, "\n", 1), a:event)
+    endif
+endfunction
+
+function! s:on_vim_job_close_cb(info, str, callback, channel) abort
+    call asyncomplete#log('asyncomplete-tags.vim', 'close_cb', a:info['exit'])
+    let a:info['close'] = 1
+    if a:info['close'] && a:info['exit']
+        call a:callback(a:info['id'], a:info['exit_code'], 'exit')
     endif
 endfunction
 " }}}
