@@ -82,7 +82,6 @@ endfunction
 function! s:complete(info) abort
     let l:opt = a:info['opt']
     let l:ctx = a:info['ctx']
-    call asyncomplete#log(keys(a:info['matches']))
     call asyncomplete#complete(l:opt['name'], l:ctx, a:info['startcol'], keys(a:info['matches']))
 endfunction
 
