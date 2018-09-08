@@ -128,12 +128,16 @@ function! s:exec(cmd, str, callback) abort
             \ })
     else
         let l:info = { 'close': 0, 'exit': 0, 'exit_code': -1 }
-        let l:job = job_start(a:cmd, {
-                \ 'out_cb': function('s:on_vim_job_event', [l:info, a:str, a:callback, 'stdout']),
-                \ 'err_cb': function('s:on_vim_job_event', [l:info, a:str, a:callback, 'stderr']),
-                \ 'exit_cb': function('s:on_vim_job_event', [l:info, a:str, a:callback, 'exit']),
-                \ 'close_cb': function('s:on_vim_job_close_cb', [l:info, a:str, a:callback]),
-            \ })
+        let l:jobopt = {
+            \ 'out_cb': function('s:on_vim_job_event', [l:info, a:str, a:callback, 'stdout']),
+            \ 'err_cb': function('s:on_vim_job_event', [l:info, a:str, a:callback, 'stderr']),
+            \ 'exit_cb': function('s:on_vim_job_event', [l:info, a:str, a:callback, 'exit']),
+            \ 'close_cb': function('s:on_vim_job_close_cb', [l:info, a:str, a:callback]),
+        \ }
+        if has('patch-8.1.350')
+          let l:jobopt['noblock'] = 1
+        endif
+        let l:job = job_start(a:cmd, l:jobopt)
         let l:channel = job_getchannel(l:job)
         return ch_info(l:channel)['id']
     endif
