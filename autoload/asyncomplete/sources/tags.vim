@@ -98,7 +98,7 @@ function! s:lines_to_matches(matches, lines) abort
 endfunction
 
 function! s:get_tag_files(opt)
-    let l:max_file_size = 50000000 " 20mb
+    let l:max_file_size = 50000000 " 50mb
 
     if has_key(a:opt, 'config') && has_key(a:opt['config'], 'max_file_size')
         let l:max_file_size = a:opt['config']['max_file_size']
