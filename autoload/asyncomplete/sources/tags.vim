@@ -24,6 +24,12 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
     let l:matches = {}
     let l:startcol = l:col - l:kwlen
 
+    if exists("*getcompletion")
+      let l:data = getcompletion(l:kw,'tag')
+      call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:data)
+      return
+    endif
+
     let l:info = { 'counter': len(l:tag_files), 'startcol': l:startcol, 'matches': l:matches, 'opt': a:opt, 'ctx': a:ctx, 'lines': [] }
 
     if (executable('grep'))
