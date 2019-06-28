@@ -92,7 +92,7 @@ function! s:lines_to_matches(matches, lines) abort
             if len(l:splits) > 0
                 let l:word = l:splits[0]
                 let l:type = l:splits[-1]
-                call add(a:matches, {"word": l:word, "menu": "[tag: " . l:type . "]"})
+                call add(a:matches, {"word": l:word, "dup": 1, "icase": 1, "menu": "[tag: " . l:type . "]"})
             endif
         endif
     endfor
