@@ -26,7 +26,10 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
 
     if exists("*getcompletion")
       let l:data = getcompletion(l:kw,'tag')
-      call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:data)
+      for l:word in l:data
+        call add(l:matches, {"word": l:word, "dup": 1, "icase": 1, "menu": "[tag]"})
+      endfor
+      call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:matches)
       return
     endif
 
