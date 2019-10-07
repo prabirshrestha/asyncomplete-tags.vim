@@ -18,12 +18,15 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
     let l:kw = matchstr(l:typed, '\w\+$')
     let l:kwlen = len(l:kw)
 
-    let l:matches = {}
+    let l:matches = []
     let l:startcol = l:col - l:kwlen
 
     if exists("*getcompletion")
       let l:data = getcompletion(l:kw,'tag')
-      call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:data)
+      for l:word in l:data
+        call add(l:matches, {"word": l:word, "dup": 1, "icase": 1, "menu": "[tag]"})
+      endfor
+      call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:matches)
       return
     endif
 
@@ -55,7 +58,7 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
             call s:lines_to_matches(l:matches, l:lines)
         endfor
 
-        call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, keys(l:matches))
+        call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:matches)
     endif
 endfunction
 
@@ -85,7 +88,7 @@ endfunction
 function! s:complete(info) abort
     let l:opt = a:info['opt']
     let l:ctx = a:info['ctx']
-    call asyncomplete#complete(l:opt['name'], l:ctx, a:info['startcol'], keys(a:info['matches']))
+    call asyncomplete#complete(l:opt['name'], l:ctx, a:info['startcol'], a:info['matches'])
 endfunction
 
 function! s:lines_to_matches(matches, lines) abort
@@ -94,7 +97,8 @@ function! s:lines_to_matches(matches, lines) abort
             let l:splits = split(l:line, "\t")
             if len(l:splits) > 0
                 let l:word = l:splits[0]
-                let a:matches[l:word] = 1
+                let l:type = l:splits[-1]
+                call add(a:matches, {"word": l:word, "dup": 1, "icase": 1, "menu": "[tag: " . l:type . "]"})
             endif
         endif
     endfor
