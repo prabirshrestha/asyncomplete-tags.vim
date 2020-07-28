@@ -21,6 +21,23 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
     let l:matches = []
     let l:startcol = l:col - l:kwlen
 
+    function! s:uniqtags(a, b)
+      if a:a["name"] == a:b["name"] && a:a["kind"] == a:b["kind"]
+        return 0
+      else
+        return 1
+      endif
+    endfunction
+
+    if exists("*taglist")
+      let l:data = taglist('^' . l:kw . '.*')
+      for l:item in uniq(l:data, "s:uniqtags")
+        call add(l:matches, {"word": l:item["name"], "dup": 1, "icase": 1, "kind": l:item["kind"], "menu": "[tag]"})
+      endfor
+      call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:matches)
+      return
+    endif
+
     if exists("*getcompletion")
       let l:data = getcompletion(l:kw,'tag')
       for l:word in l:data
