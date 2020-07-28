@@ -21,14 +21,6 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
     let l:matches = []
     let l:startcol = l:col - l:kwlen
 
-    function! s:uniqtags(a, b)
-      if a:a["name"] == a:b["name"] && a:a["kind"] == a:b["kind"]
-        return 0
-      else
-        return 1
-      endif
-    endfunction
-
     if exists("*taglist")
       let l:data = taglist('^' . l:kw . '.*')
       for l:item in uniq(l:data, "s:uniqtags")
@@ -77,6 +69,14 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
 
         call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:matches)
     endif
+endfunction
+
+function! s:uniqtags(a, b)
+  if a:a["name"] == a:b["name"] && a:a["kind"] == a:b["kind"]
+    return 0
+  else
+    return 1
+  endif
 endfunction
 
 function s:escape(path) abort
