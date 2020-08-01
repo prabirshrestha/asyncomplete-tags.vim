@@ -33,7 +33,7 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
     if exists("*getcompletion")
       let l:data = getcompletion(l:kw,'tag')
       for l:word in l:data
-        call add(l:matches, {"word": l:word, "dup": 1, "icase": 1, "menu": "[tag]"})
+        call add(l:matches, {"word": l:word, "dup": 1, "icase": 1, "kind": "t"})
       endfor
       call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:matches)
       return
@@ -115,7 +115,7 @@ function! s:lines_to_matches(matches, lines) abort
             if len(l:splits) > 0
                 let l:word = l:splits[0]
                 let l:type = l:splits[-1]
-                call add(a:matches, {"word": l:word, "dup": 1, "icase": 1, "menu": "[tag: " . l:type . "]"})
+                call add(a:matches, {"word": l:word, "dup": 1, "icase": 1, "kind": l:kind, "menu": "[tag]"})
             endif
         endif
     endfor
