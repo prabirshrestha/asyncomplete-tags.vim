@@ -15,7 +15,7 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
     let l:col = a:ctx['col']
     let l:typed = a:ctx['typed']
 
-    let l:kw = matchstr(l:typed, '\w\+$')
+    let l:kw = matchstr(l:typed, '\k\+$')
     let l:kwlen = len(l:kw)
 
     let l:matches = []
