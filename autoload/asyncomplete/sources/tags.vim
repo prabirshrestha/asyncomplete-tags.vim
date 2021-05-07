@@ -23,7 +23,7 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
 
     if exists("*taglist")
       let l:data = taglist('^' . l:kw . '.*')
-      for l:item in uniq(sort(l:data, "s:sorttags"), "s:uniqtags")
+      for l:item in uniq(l:data, "s:uniqtags")
         call add(l:matches, {"word": l:item["name"], "dup": 1, "icase": 1, "kind": l:item["kind"], "menu": "[tag]"})
       endfor
       call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:matches)
@@ -69,16 +69,6 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
 
         call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:matches)
     endif
-endfunction
-
-function! s:sorttags(a, b)
-  if a:a["name"] > a:b["name"]
-    return 1
-  elseif a:a["name"] < a:b["name"]
-    return -1
-  else
-    return 0
-  endif
 endfunction
 
 function! s:uniqtags(a, b)
