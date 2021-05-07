@@ -21,10 +21,19 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
     let l:matches = []
     let l:startcol = l:col - l:kwlen
 
+    if exists("*taglist")
+      let l:data = taglist('^' . l:kw . '.*')
+      for l:item in uniq(sort(l:data, "s:sorttags"), "s:uniqtags")
+        call add(l:matches, {"word": l:item["name"], "dup": 1, "icase": 1, "kind": l:item["kind"], "menu": "[tag]"})
+      endfor
+      call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:matches)
+      return
+    endif
+
     if exists("*getcompletion")
       let l:data = getcompletion(l:kw,'tag')
       for l:word in l:data
-        call add(l:matches, {"word": l:word, "dup": 1, "icase": 1, "menu": "[tag]"})
+        call add(l:matches, {"word": l:word, "dup": 1, "icase": 1, "kind": "t"})
       endfor
       call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:matches)
       return
@@ -60,6 +69,24 @@ function! asyncomplete#sources#tags#completor(opt, ctx)
 
         call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:matches)
     endif
+endfunction
+
+function! s:sorttags(a, b)
+  if a:a["name"] > a:b["name"]
+    return 1
+  elseif a:a["name"] < a:b["name"]
+    return -1
+  else
+    return 0
+  endif
+endfunction
+
+function! s:uniqtags(a, b)
+  if a:a["name"] == a:b["name"] && a:a["kind"] == a:b["kind"]
+    return 0
+  else
+    return 1
+  endif
 endfunction
 
 function s:escape(path) abort
@@ -98,7 +125,7 @@ function! s:lines_to_matches(matches, lines) abort
             if len(l:splits) > 0
                 let l:word = l:splits[0]
                 let l:type = l:splits[-1]
-                call add(a:matches, {"word": l:word, "dup": 1, "icase": 1, "menu": "[tag: " . l:type . "]"})
+                call add(a:matches, {"word": l:word, "dup": 1, "icase": 1, "kind": l:kind, "menu": "[tag]"})
             endif
         endif
     endfor
